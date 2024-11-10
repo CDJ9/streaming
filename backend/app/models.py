@@ -1,36 +1,15 @@
-# app/models.py
+from sqlalchemy import Column, Integer, String  # Adjust imports as needed
+from sqlalchemy.ext.declarative import declarative_base
 
-"""
-This file contains the SQLAlchemy models for Users and Rooms.
+Base = declarative_base()  # Define Base here
 
-- The User model stores user information.
-- The Room model stores video conferencing room information.
-"""
-
-from sqlalchemy import Column, Integer, String, ForeignKey
-from sqlalchemy.orm import relationship, declarative_base
-
-# Define the base class for SQLAlchemy models
-Base = declarative_base()
-
+# Example in SQLAlchemy Model
 class User(Base):
-    __tablename__ = 'users'
-
+    __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
-    password = Column(String)
-    email = Column(String, unique=True)
-
-    # Relationship: One user can have many rooms
-    rooms = relationship("Room", back_populates="host")
+    username = Column(String, unique=True, nullable=False)
+    password = Column(String, nullable=False)
+    email = Column(String, unique=True, nullable=False)
 
 
-class Room(Base):
-    __tablename__ = 'rooms'
-
-    id = Column(Integer, primary_key=True, index=True)
-    room_name = Column(String, unique=True)
-    host_id = Column(Integer, ForeignKey('users.id'))
-
-    # Relationship: One room has one host (a User)
-    host = relationship("User", back_populates="rooms")
+# Add other models here, using `Base` defined in this file

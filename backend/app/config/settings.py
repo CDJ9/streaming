@@ -3,15 +3,14 @@
 """
 Configuration settings for the app using Pydantic Settings.
 
-- This version uses pydantic-settings to manage configuration.
+- This version is updated for local MiroTalk integration.
 """
 
-from pydantic_settings import BaseSettings  # Corrected import
+from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     database_url: str = "mysql+pymysql://jitsi_user:yourpassword@localhost/str3aming"
     secret_key: str = "super-secret-key"
-    jitsi_domain: str = "https://meet.jit.si"
 
     class Config:
         env_file = ".env"  # Load environment variables from .env file

@@ -1,19 +1,35 @@
-# app/routers/auth.py
-
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Form
 from sqlalchemy.orm import Session
-from app.dependencies import get_db  # Ensure correct import of get_db
+from app.dependencies import get_db
+from app.services.auth_service import create_user, authenticate_user, get_user_by_username
+from app.schemas import UserCreate
 
-router = APIRouter()  # This is the router object that needs to be defined
+router = APIRouter()
 
-# Example endpoint for user signup
-@router.post("/signup")
-def signup(username: str, password: str, email: str, db: Session = Depends(get_db)):
-    # Here, you would normally call a service to create the user
-    return {"message": f"User {username} created successfully"}
+@router.post("/register")
+def register(
+    username: str = Form(...),
+    password: str = Form(...),
+    email: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    # Check if the user already exists
+    existing_user = get_user_by_username(db, username)
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Username already taken")
 
-# Example endpoint for user login
+    # Create the new user
+    create_user(db, username, password, email)
+    return {"message": "User registered successfully"}
+
 @router.post("/login")
-def login(username: str, password: str, db: Session = Depends(get_db)):
-    # Example logic for login - you'd typically check the password here
-    return {"message": f"Welcome {username}"}
+def login(
+    username: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    user = authenticate_user(db, username, password)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+
+    return {"message": f"Welcome {username}!"}

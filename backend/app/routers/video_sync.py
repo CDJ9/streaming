@@ -1,33 +1,34 @@
-# app/routers/video_sync.py
-
+# backend/app/routers/video_sync.py (or backend/app/services/video_sync.py)
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from typing import List
 
 router = APIRouter()
+host_username = None
+connected_clients: List[WebSocket] = []
 
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: List[WebSocket] = []
+@router.websocket("/ws/video_control/{username}")
+async def video_control(websocket: WebSocket, username: str):
+    global host_username
+    await websocket.accept()
+    connected_clients.append(websocket)
+    
+    # Assign host role
+    if username.startswith("123"):
+        host_username = username
+        await websocket.send_text("You are the host")
+    else:
+        await websocket.send_text("You are a visitor")
 
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
-
-    def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
-
-    async def broadcast(self, message: str):
-        for connection in self.active_connections:
-            await connection.send_text(message)
-
-manager = ConnectionManager()
-
-@router.websocket("/ws/{room_id}")
-async def websocket_endpoint(websocket: WebSocket, room_id: str):
-    await manager.connect(websocket)
     try:
+        # Listen for video control messages from the host
         while True:
             data = await websocket.receive_text()
-            await manager.broadcast(data)
+            if username == host_username:
+                # Broadcast video state to all connected clients
+                for client in connected_clients:
+                    if client != websocket:
+                        await client.send_text(f"Host changed video state: {data}")
     except WebSocketDisconnect:
-        manager.disconnect(websocket)
+        connected_clients.remove(websocket)
+        if username == host_username:
+            host_username = None
