@@ -19,44 +19,40 @@ app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 app.include_router(room.router, prefix="/room", tags=["Room"])
 app.include_router(video_sync.router, prefix="/video_sync", tags=["Video Sync"])
 
-# Connection manager to handle WebSocket connections
+# Manage connections per room
 class ConnectionManager:
     def __init__(self):
-        self.active_connections: List[WebSocket] = []
+        self.active_connections: Dict[str, List[WebSocket]] = {}
 
-    async def connect(self, websocket: WebSocket):
+    async def connect(self, websocket: WebSocket, room: str):
         await websocket.accept()
-        self.active_connections.append(websocket)
+        if room not in self.active_connections:
+            self.active_connections[room] = []
+        self.active_connections[room].append(websocket)
 
-    def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
+    def disconnect(self, websocket: WebSocket, room: str):
+        if room in self.active_connections:
+            self.active_connections[room].remove(websocket)
+            if not self.active_connections[room]:
+                del self.active_connections[room]
 
-    async def broadcast(self, message: str):
-        for connection in self.active_connections:
-            await connection.send_text(message)
+    async def broadcast(self, room: str, message: str):
+        if room in self.active_connections:
+            for connection in self.active_connections[room]:
+                await connection.send_text(message)
 
 manager = ConnectionManager()
 
 # WebSocket route for video control
-@app.websocket("/ws/video_control/{username}")
-async def video_control(websocket: WebSocket, username: str):
-    await manager.connect(websocket)
+@app.websocket("/ws/video_control/{room}/{username}")
+async def video_control(websocket: WebSocket, room: str, username: str):
+    await manager.connect(websocket, room)
     try:
-        if username.startswith("123"):
-            await websocket.send_text("You are the host")
-        else:
-            await websocket.send_text("You are a visitor")
-
-        # Listen for messages and broadcast if the user is the host
         while True:
             data = await websocket.receive_text()
-            if username.startswith("123"):
-                # Host sends message to all clients
-                await manager.broadcast(data)
-            else:
-                await websocket.send_text("Visitors can't change the video state.")
+            await manager.broadcast(room, data)
     except WebSocketDisconnect:
-        manager.disconnect(websocket)
+        manager.disconnect(websocket, room)
     except Exception as e:
         print("WebSocket connection closed:", e)
 

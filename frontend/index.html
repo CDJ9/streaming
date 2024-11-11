@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Str3aming - Browse YouTube</title>
     <style>
+      /* Styles remain unchanged */
       body {
         display: flex;
         flex-direction: column;
@@ -59,12 +60,39 @@
 
       <div id="results-container"></div>
 
+      <!-- Play/Pause Buttons for Video Control -->
+      <button id="play-button">Play</button>
+      <button id="pause-button">Pause</button>
+
       <button id="loadMoreButton" onclick="searchYouTube()">Load More</button>
     </div>
 
     <script>
-      const API_KEY = "AIzaSyDH5IQDkmzE_W-2tHt4Fbi6ZQByscWAt9Q"; // Replace with your YouTube API key
+      const API_KEY = "AIzaSyDH5IQDkmzE_W-2tHt4Fbi6ZQByscWAt9Q"; // Your YouTube API key
       let nextPageToken = "";
+
+      // Function to wait for the room number to be set in localStorage
+      function waitForRoomNumber() {
+        return new Promise((resolve) => {
+          const checkRoomNumber = () => {
+            const roomNumber = localStorage.getItem("mirotalkRoomId");
+            if (roomNumber) {
+              resolve(roomNumber);
+            } else {
+              setTimeout(checkRoomNumber, 500); // Check again after 500ms
+            }
+          };
+          checkRoomNumber();
+        });
+      }
+
+      // Function to send messages to the server
+      let websocket;
+      function sendMessage(type, data) {
+        if (websocket && websocket.readyState === WebSocket.OPEN) {
+          websocket.send(JSON.stringify({ type, data }));
+        }
+      }
 
       // YouTube Search Function
       function searchYouTube() {
@@ -76,25 +104,95 @@
         fetch(url)
           .then((response) => response.json())
           .then((data) => {
-            const resultsContainer = document.getElementById("results-container");
-            resultsContainer.innerHTML = ""; // Clear previous results
-
-            data.items.forEach((item) => {
-              const videoId = item.id.videoId;
-              const title = item.snippet.title;
-              const video = document.createElement("div");
-              video.className = "video";
-              video.innerHTML = `
-                <iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>
-                <p>${title}</p>
-              `;
-              resultsContainer.appendChild(video);
-            });
-
+            console.log("Fetched YouTube videos:", data);
+            sendMessage("searchResults", data.items); // Send search results to all users
+            displaySearchResults(data.items); // Display the search results
             nextPageToken = data.nextPageToken || "";
           })
-          .catch((error) => console.error("Error fetching YouTube videos:", error));
+          .catch((error) => {
+            console.error("Error fetching YouTube videos:", error); // Corrected error handling
+          });
       }
+
+      // Function to display search results
+      function displaySearchResults(items) {
+        const resultsContainer = document.getElementById("results-container");
+        resultsContainer.innerHTML = ""; // Clear previous results
+
+        items.forEach((item) => {
+          const videoId = item.id.videoId;
+          const title = item.snippet.title;
+          const video = document.createElement("div");
+          video.className = "video";
+          video.innerHTML = `
+            <iframe id="your-video-element" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>
+            <p>${title}</p>
+          `;
+          resultsContainer.appendChild(video);
+
+          // Add click event to play the video and broadcast to others
+          video.onclick = function () {
+            sendMessage("play", videoId); // Send the play command
+          };
+        });
+      }
+
+      // Main function to initialize WebSocket connection
+      async function initializeWebSocket() {
+        const roomNumber = await waitForRoomNumber(); // Wait for the room number to be available
+        const username = "user"; // Replace with logic to get the actual username
+        console.log("Room Number from localStorage:", roomNumber);
+
+        // Establish WebSocket connection
+        websocket = new WebSocket(
+          `ws://localhost:8000/ws/video_control/${roomNumber}/${username}`
+        );
+
+        // Handle incoming messages
+        websocket.onmessage = function (event) {
+          const message = JSON.parse(event.data);
+          console.log("Message from server:", message);
+
+          // Handle search results synchronization
+          if (message.type === "searchResults") {
+            displaySearchResults(message.data);
+          }
+
+          // Handle video playback control
+          const videoElement = document.getElementById("your-video-element");
+          if (message.type === "play" && videoElement) {
+            videoElement.contentWindow.postMessage(
+              '{"event":"command","func":"playVideo","args":""}',
+              "*"
+            );
+          } else if (message.type === "pause" && videoElement) {
+            videoElement.contentWindow.postMessage(
+              '{"event":"command","func":"pauseVideo","args":""}',
+              "*"
+            );
+          }
+        };
+
+        websocket.onopen = function () {
+          console.log("Connected to WebSocket server");
+        };
+
+        websocket.onclose = function () {
+          console.log("Disconnected from WebSocket server");
+        };
+
+        // Attach play/pause functionality to buttons
+        document.getElementById("play-button").onclick = function () {
+          sendMessage("play");
+        };
+
+        document.getElementById("pause-button").onclick = function () {
+          sendMessage("pause");
+        };
+      }
+
+      // Start the WebSocket initialization
+      initializeWebSocket();
     </script>
   </body>
 </html>
