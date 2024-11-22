@@ -1,0 +1,212 @@
+/* Global Variables */
+:root {
+    --primary-color: #ff5722;
+    --primary-dark: #892507;
+    --secondary-color: #333;
+    --background-color: #f5f5f5;
+    --text-color: #333;
+    --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --transition-speed: 0.3s;
+    --border-radius: 8px;
+    --spacing-unit: 1rem;
+}
+
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+/* Typography */
+h2 {
+    font-size: 1.75rem;
+    margin-bottom: var(--spacing-unit);
+    color: var(--secondary-color);
+    font-weight: 600;
+}
+
+p {
+    margin: var(--spacing-unit) 0;
+    font-size: 1rem;
+}
+
+/* Links */
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color var(--transition-speed);
+}
+
+a:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+}
+
+/* Container Styles */
+.container {
+    background-color: #fff;
+    padding: calc(var(--spacing-unit) * 2);
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    width: min(90%, 400px);
+    margin: auto;
+}
+
+/* Form Elements */
+input[type="text"],
+input[type="password"],
+input[type="email"] {
+    width: 100%;
+    padding: calc(var(--spacing-unit) * 0.75);
+    margin-bottom: var(--spacing-unit);
+    border: 1px solid #ddd;
+    border-radius: calc(var(--border-radius) / 2);
+    transition: border-color var(--transition-speed);
+    font-size: 1rem;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(255, 87, 34, 0.1);
+}
+
+label {
+    display: block;
+    margin-bottom: calc(var(--spacing-unit) * 0.5);
+    font-weight: 500;
+    color: var(--secondary-color);
+}
+
+button {
+    width: 100%;
+    padding: calc(var(--spacing-unit) * 0.75);
+    background-color: var(--primary-color);
+    color: #fff;
+    border: none;
+    border-radius: calc(var(--border-radius) / 2);
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background-color var(--transition-speed);
+}
+
+button:hover {
+    background-color: var(--primary-dark);
+}
+
+button:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 87, 34, 0.2);
+}
+
+/* Search Container */
+#search-container {
+    padding: calc(var(--spacing-unit) * 1.5);
+    background-color: var(--secondary-color);
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-unit);
+}
+
+#search-input {
+    width: 60%;
+    padding: calc(var(--spacing-unit) * 0.75);
+    border: none;
+    border-radius: calc(var(--border-radius) / 2);
+    font-size: 1rem;
+}
+
+/* Results Container */
+#results-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-unit);
+    padding: var(--spacing-unit);
+    background-color: #fff;
+    overflow-y: auto;
+    height: 40vh;
+}
+
+.video {
+    background-color: #fff;
+    border-radius: var(--border-radius);
+    padding: var(--spacing-unit);
+    box-shadow: var(--card-shadow);
+    transition: transform var(--transition-speed);
+}
+
+.video:hover {
+    transform: translateY(-2px);
+}
+
+.video p {
+    margin-top: calc(var(--spacing-unit) * 0.5);
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+/* Button Container */
+#button-container {
+    display: flex;
+    justify-content: center;
+    padding: var(--spacing-unit);
+    background-color: var(--secondary-color);
+}
+
+#loadMoreButton {
+    width: auto;
+    min-width: 150px;
+}
+
+/* IFrame Styles */
+iframe {
+    width: 100%;
+    height: 200px;
+    border-radius: calc(var(--border-radius) / 2);
+    border: none;
+}
+
+#mirotalk-iframe {
+    height: 50vh;
+    width: 100%;
+    border: 0;
+}
+
+/* Main Container */
+#main-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    #results-container {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    .container {
+        width: 95%;
+        padding: var(--spacing-unit);
+    }
+
+    #search-input {
+        width: 80%;
+    }
+}
