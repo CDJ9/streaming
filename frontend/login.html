@@ -1,52 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login</title>
-</head>
-<body>
+  </head>
+  <body>
     <h2>Login</h2>
-    <form id="login-form" method="POST">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required><br><br>
-
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required><br><br>
-
-        <button type="submit">Login</button>
-    </form>
-
-    <p>Don't have an account? <a href="register.html">Register here</a>.</p>
+    <div id="loginFormContainer">
+        <form id="loginForm">
+          <label for="username">Username:</label>
+          <input type="text" id="username" name="username" required />
+          <br />
+          <label for="password">Password:</label>
+          <input type="password" id="password" name="password" required />
+          <br />
+          <button type="submit">Login</button>
+        </form>
+        <p id="message"></p>
+      </div>
+      
+      <div id="main-content" style="display: none;">
 
     <script>
-        document.getElementById("login-form").addEventListener("submit", async function(event) {
-            event.preventDefault();
-            const formData = new URLSearchParams();
-            formData.append("username", document.getElementById("username").value);
-            formData.append("password", document.getElementById("password").value);
+document.addEventListener("DOMContentLoaded", function () {
+  console.log("JavaScript loaded successfully!"); // Log when JS is loaded
 
-            try {
-                const response = await fetch("/auth/login", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: formData
-                });
+  const loginForm = document.getElementById("loginForm");
 
-                if (response.ok) {
-                    const data = await response.json();
-                    alert("Login successful: " + data.message);
-                    // Redirect to the main page or another URL if needed
-                    window.location.href = "/index.html";
-                } else {
-                    const error = await response.json();
-                    alert("Login failed: " + error.detail);
-                }
-            } catch (error) {
-                console.error("Error:", error);
-                alert("An error occurred. Please try again.");
-            }
-        });
+  loginForm.addEventListener("submit", function (event) {
+    event.preventDefault(); // Prevent the form from submitting
+    console.log("Form submission prevented!"); // Log when form submission is prevented
+
+    // Just for testing, comment out the fetch request and see if this message logs
+    alert("Form submitted, but page did not reload!"); // Simple alert to verify
+  });
+});
+
     </script>
-</body>
+  </body>
 </html>

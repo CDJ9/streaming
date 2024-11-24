@@ -3,9 +3,18 @@ from typing import List
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from app.models import Base
+from fastapi.middleware.cors import CORSMiddleware
+from app.models import Base, User
 from app.dependencies import engine
 from app.routers import auth, room, video_sync
+from passlib.context import CryptContext
+from app.schemas import UserCreate
+from sqlalchemy.orm import Session
+
+
+from fastapi import Depends
+from app.dependencies import get_db
+
 
 app = FastAPI()
 
@@ -13,6 +22,15 @@ app = FastAPI()
 
 # Create tables in the database
 Base.metadata.create_all(bind=engine)
+
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://127.0.0.1:8000"],  # Allow requests from your frontend
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Register routers
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
@@ -70,9 +88,34 @@ def list_routes():
     return [{"path": route.path, "name": route.name} for route in app.router.routes]
 
 
-@app.post("/test")
-def test_endpoint():
-    return {"message": "POST request successful!"}
+@app.post("/test-post")
+def test_post():
+    return {"message": "POST request successful"}
+
 
 frontend_path = os.path.join(os.path.dirname(__file__), "../../frontend")
 app.mount("/", StaticFiles(directory=frontend_path, html=True), name="frontend")
+
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+@app.post("/register")
+async def register_user(user: UserCreate, db: Session = Depends(get_db)):
+    # Check if the username or email already exists
+    existing_user = db.query(User).filter(User.username == user.username).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Username already exists")
+
+    # Hash the password
+    hashed_password = get_password_hash(user.password)
+    
+    # Create a new user instance
+    new_user = User(username=user.username, email=user.email, password=hashed_password)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return {"message": "User registered successfully", "username": new_user.username}
